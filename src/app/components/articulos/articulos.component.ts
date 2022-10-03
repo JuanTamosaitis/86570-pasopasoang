@@ -6,6 +6,7 @@ import { MockArticulosFamiliasService } from '../../services/mock-articulos-fami
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { ArticulosService } from '../../services/articulos.service';
 import { ArticulosFamiliasService } from '../../services/articulos-familias.service';
+import { ModalDialogService } from '../../services/modal-dialog.service';
 
 @Component({
   selector: 'app-articulos',
@@ -14,6 +15,7 @@ import { ArticulosFamiliasService } from '../../services/articulos-familias.serv
 })
 export class ArticulosComponent implements OnInit {
   Titulo = 'Articulos';
+  submitted = false;
   TituloAccionABMC: { [index: string]: string } = {
     A: '(Agregar)',
     B: '(Eliminar)',
@@ -44,7 +46,8 @@ export class ArticulosComponent implements OnInit {
     //private articulosService: MockArticulosService,
     //private articulosFamiliasService: MockArticulosFamiliasService,
     private articulosService: ArticulosService,
-    private articulosFamiliasService: ArticulosFamiliasService
+    private articulosFamiliasService: ArticulosFamiliasService,
+    private modalDialogService: ModalDialogService
   ) {}
 
   ngOnInit() {
@@ -59,6 +62,7 @@ export class ArticulosComponent implements OnInit {
 
   Agregar() {
     this.AccionABMC = 'A';
+    this.submitted = false;
     this.FormRegistro.reset({ Activo: true, IdArticulo: 0 });
   }
 
@@ -97,14 +101,24 @@ export class ArticulosComponent implements OnInit {
   // comienza la modificacion, luego la confirma con el metodo Grabar
   Modificar(Item: Articulo) {
     if (!Item.Activo) {
-      alert('No puede modificarse un registro Inactivo.');
+      this.modalDialogService.Alert(
+        'No puede modificarse un registro Inactivo.'
+      );
       return;
     }
     this.BuscarPorId(Item, 'M');
+    this.submitted = false;
+    this.FormRegistro.reset({ Activo: true, IdArticulo: 0 });
   }
 
   // grabar tanto altas como modificaciones
   Grabar() {
+    this.submitted = true;
+
+    if (this.FormRegistro.invalid) {
+      return;
+    }
+
     const itemCopy: Articulo = {
       IdArticulo: this.FormRegistro.value.IdArticulo!,
       Nombre: this.FormRegistro.value.Nombre!,
@@ -112,8 +126,8 @@ export class ArticulosComponent implements OnInit {
       Stock: this.FormRegistro.value.Stock!,
       CodigoDeBarra: this.FormRegistro.value.CodigoDeBarra!,
       IdArticuloFamilia: this.FormRegistro.value.IdArticuloFamilia!,
-      FechaAlta: this.FormRegistro.value.FechaAlta! || " ",
-      Activo: this.FormRegistro.value.Activo!
+      FechaAlta: this.FormRegistro.value.FechaAlta! || ' ',
+      Activo: this.FormRegistro.value.Activo!,
     };
 
     var arrFecha = itemCopy.FechaAlta.substring(0, 10).split('/');
@@ -124,11 +138,11 @@ export class ArticulosComponent implements OnInit {
         parseInt(arrFecha[0])
       ).toISOString();
 
-     // agregar post
-     if (this.AccionABMC == "A") {
+    // agregar post
+    if (this.AccionABMC == 'A') {
       this.articulosService.post(itemCopy).subscribe((res: any) => {
         this.Volver();
-        alert('Registro agregado correctamente.');
+        this.modalDialogService.Alert('Registro agregado correctamente.');
         this.Buscar();
       });
     } else {
@@ -137,23 +151,26 @@ export class ArticulosComponent implements OnInit {
         .put(itemCopy.IdArticulo, itemCopy)
         .subscribe((res: any) => {
           this.Volver();
-          alert('Registro modificado correctamente.');
+          this.modalDialogService.Alert('Registro modificado correctamente.');
           this.Buscar();
         });
     }
   }
 
   ActivarDesactivar(Item: Articulo) {
-    var resp = confirm(
+    var resp = this.modalDialogService.Confirm(
       'Esta seguro de ' +
         (Item.Activo ? 'desactivar' : 'activar') +
-        ' este registro?'
+        ' este registro?',
+      undefined,
+      undefined,
+      undefined,
+      () =>
+        this.articulosService
+          .delete(Item.IdArticulo)
+          .subscribe((res: any) => this.Buscar()),
+      null
     );
-    if (resp === true) {
-      this.articulosService.delete(Item.IdArticulo).subscribe((res: any) => {
-        this.Buscar();
-      });
-    }
   }
 
   // Volver desde Agregar/Modificar
@@ -162,11 +179,11 @@ export class ArticulosComponent implements OnInit {
   }
 
   ImprimirListado() {
-    alert('Sin desarrollar...');
+    this.modalDialogService.Alert('Sin desarrollar...');
   }
 
   GetArticuloFamiliaNombre(id: number) {
-    let Nombre = this.Familias?.find(x => x.IdArticuloFamilia === id)?.Nombre;
+    let Nombre = this.Familias?.find((x) => x.IdArticuloFamilia === id)?.Nombre;
     return Nombre;
   }
 
@@ -177,12 +194,30 @@ export class ArticulosComponent implements OnInit {
 
   FormRegistro = new FormGroup({
     IdArticulo: new FormControl(0),
-    Nombre: new FormControl(''),
-    Precio: new FormControl(null),
-    Stock: new FormControl(null),
-    CodigoDeBarra: new FormControl(''),
-    IdArticuloFamilia: new FormControl(0),
-    FechaAlta: new FormControl(''),
+    Nombre: new FormControl('', [
+      Validators.required,
+      Validators.minLength(4),
+      Validators.maxLength(55),
+    ]),
+    Precio: new FormControl(null, [
+      Validators.required,
+      Validators.pattern('[0-9]{1,7}'),
+    ]),
+    Stock: new FormControl(null, [
+      Validators.required,
+      Validators.pattern('[0-9]{1,10}'),
+    ]),
+    CodigoDeBarra: new FormControl('', [
+      Validators.required,
+      Validators.pattern('[0-9]{13}'),
+    ]),
+    IdArticuloFamilia: new FormControl(0, [Validators.required]),
+    FechaAlta: new FormControl('', [
+      Validators.required,
+      Validators.pattern(
+        '(0[1-9]|[12][0-9]|3[01])[-/](0[1-9]|1[012])[-/](19|20)[0-9]{2}'
+      ),
+    ]),
     Activo: new FormControl(true),
   });
 }

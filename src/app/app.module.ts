@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule} from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS} from '@angular/common/http';
+import { MyInterceptor } from './shared/MyInterceptor';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { InicioComponent } from './components/inicio/inicio.component';
@@ -10,7 +11,8 @@ import { APP_BASE_HREF } from '@angular/common';
 import { MenuComponent } from './components/menu/menu.component';
 import { ArticulosComponent } from './components/articulos/articulos.component';
 import { ReactiveFormsModule } from '@angular/forms';
-import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationModule, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { ModalDialogComponent } from './components/modal-dialog/modal-dialog.component';
 
 
 @NgModule({
@@ -19,7 +21,8 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
     InicioComponent,
     ArticulosFamiliasComponent,
     MenuComponent,
-    ArticulosComponent
+    ArticulosComponent,
+    ModalDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -33,11 +36,14 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
     ]
     ),
     ReactiveFormsModule,
-    NgbPaginationModule
+    NgbPaginationModule,
+    NgbModalModule
   ],
   providers: [
-    {provide: APP_BASE_HREF, useValue:"/"}
+    {provide: APP_BASE_HREF, useValue:"/"},
+    {provide: HTTP_INTERCEPTORS, useClass: MyInterceptor, multi: true}
   ],
+  entryComponents: [ModalDialogComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
