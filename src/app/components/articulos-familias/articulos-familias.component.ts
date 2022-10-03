@@ -1,10 +1,10 @@
 import { MockArticulosFamiliasService } from './../../services/mock-articulos-familias.service';
 import { Component, OnInit } from '@angular/core';
-import { ArticulosFamiliasService } from 'src/app/services/articulos-familias.service';
+import { ArticulosFamiliasService } from './../../services/articulos-familias.service';
 import {
   ArticuloFamilia,
   ArticulosFamilias,
-} from 'src/app/models/articulo-familia';
+} from '../../models/articulo-familia';
 
 @Component({
   selector: 'app-articulos-familias',

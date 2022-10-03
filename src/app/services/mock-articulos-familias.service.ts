@@ -1,4 +1,4 @@
-import { ArticulosFamilias } from 'src/app/models/articulo-familia';
+import { ArticulosFamilias } from './../models/articulo-familia';
 import { Injectable } from '@angular/core';
 import { of } from 'rxjs';
 

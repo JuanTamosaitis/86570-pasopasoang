@@ -4,8 +4,8 @@ import { ArticuloFamilia } from '../../models/articulo-familia';
 import { MockArticulosService } from '../../services/mock-articulos.service';
 import { MockArticulosFamiliasService } from '../../services/mock-articulos-familias.service';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
-import { ArticulosService } from 'src/app/services/articulos.service';
-import { ArticulosFamiliasService } from 'src/app/services/articulos-familias.service';
+import { ArticulosService } from '../../services/articulos.service';
+import { ArticulosFamiliasService } from '../../services/articulos-familias.service';
 
 @Component({
   selector: 'app-articulos',
